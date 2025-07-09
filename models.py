@@ -1,14 +1,11 @@
 from datetime import datetime, timezone
-from sqlalchemy import (
-    UUID,
-    Boolean,
-    DateTime,
-    Integer
-)
+from sqlalchemy import UUID, Boolean, DateTime, Integer
 import uuid
+from flask_login import UserMixin
 from extensions import db
 
-class User(db.Model):
+
+class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = db.Column(db.String(320), nullable=False, unique=True, index=True)
@@ -24,12 +21,16 @@ class User(db.Model):
     expenses = db.relationship("Expense", backref="user", lazy=True)
 
     # Timestamps with timezone awareness
-    created_at = db.Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
     updated_at = db.Column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc)
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Soft delete
@@ -76,10 +77,7 @@ class Expense(db.Model):
     __tablename__ = "expenses"
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(
-        UUID(as_uuid=True),
-        db.ForeignKey("users.id"),
-        nullable=False,
-        index=True
+        UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False, index=True
     )
 
     name = db.Column(db.String(64), nullable=True)
