@@ -1,13 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from flask import Flask, render_template, redirect, url_for
 from flask_moment import Moment
-from flask_login import LoginManager, login_required
+from flask_login import LoginManager, login_required, current_user
 from extensions import db
-from models import User
+from models import Expense, User
 import sys
-
-# Add templates to Python path for auth module
-sys.path.append("templates")
 
 app = Flask(__name__)
 
@@ -19,7 +16,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)  # Remember for 30 days
 app.config["REMEMBER_COOKIE_SECURE"] = (
-    True  # Only send cookie over HTTPS (set False for development)
+    False  # Set to False for development, True for production with HTTPS
 )
 app.config["REMEMBER_COOKIE_HTTPONLY"] = True  # JavaScript can't access the cookie
 app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
@@ -50,12 +47,18 @@ def load_user(user_id):
 
 # Register blueprints
 from auth.views import auth_bp
+from user.views import user_bp
+from expenses.views import expenses_bp
 
 app.register_blueprint(auth_bp)
+app.register_blueprint(user_bp)
+app.register_blueprint(expenses_bp)
 
 # Create database tables
 with app.app_context():
+    # db.drop_all()  # This will delete ALL data
     db.create_all()
+    # print(Expense.__table__.columns.keys())
 
 
 @app.route("/cause500")
@@ -83,7 +86,32 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    from sqlalchemy import extract, func
+    from models import Expense
+
+    # Get current month and year
+    now = datetime.now()
+    current_month = now.month
+    current_year = now.year
+
+    # Query expenses for current month
+    monthly_expenses = Expense.query.filter(
+        Expense.user_id == current_user.id,
+        extract("month", Expense.date) == current_month,
+        extract("year", Expense.date) == current_year,
+    ).all()
+
+    # Calculate totals
+    total_amount = sum(expense.amount for expense in monthly_expenses)
+    transaction_count = len(monthly_expenses)
+    average_expense = total_amount / transaction_count if transaction_count > 0 else 0
+
+    return render_template(
+        "dashboard.html",
+        total_amount=total_amount,
+        transaction_count=transaction_count,
+        average_expense=average_expense,
+    )
 
 
 if __name__ == "__main__":

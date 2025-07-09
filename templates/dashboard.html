@@ -14,7 +14,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Total Expenses</h5>
-                            <p class="card-text display-4">$0.00</p>
+                            <p class="card-text display-4">${{ "%.2f"|format(total_amount) }}</p>
                             <p class="text-muted">This month</p>
                         </div>
                     </div>
@@ -24,7 +24,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Number of Transactions</h5>
-                            <p class="card-text display-4">0</p>
+                            <p class="card-text display-4">{{ transaction_count }}</p>
                             <p class="text-muted">This month</p>
                         </div>
                     </div>
@@ -34,7 +34,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Average Expense</h5>
-                            <p class="card-text display-4">$0.00</p>
+                            <p class="card-text display-4">${{ "%.2f"|format(average_expense) }}</p>
                             <p class="text-muted">Per transaction</p>
                         </div>
                     </div>
@@ -42,8 +42,8 @@
             </div>
             
             <div class="mt-4">
-                <a href="#" class="btn btn-primary">Add Expense</a>
-                <a href="#" class="btn btn-secondary">View Reports</a>
+                <a href="{{ url_for('expenses.add') }}" class="btn btn-primary">Add Expense</a>
+                <a href="{{ url_for('expenses.index') }}" class="btn btn-secondary">View All Expenses</a>
             </div>
         </div>
     </div>

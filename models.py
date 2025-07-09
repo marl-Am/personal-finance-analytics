@@ -84,7 +84,10 @@ class Expense(db.Model):
 
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     description = db.Column(db.String(255))
-    category = db.Column(db.String(64), index=True)
+
+    main_category = db.Column(db.String(64), nullable=False, index=True)
+    subcategory = db.Column(db.String(64), nullable=False, index=True)
+
     date = db.Column(db.Date, nullable=False, index=True)
     payment_method = db.Column(db.String(64))
 
@@ -100,3 +103,7 @@ class Expense(db.Model):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+
+    def __repr__(self):
+        return f"<Expense {self.name} - ${self.amount}>"
+

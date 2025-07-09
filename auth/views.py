@@ -42,7 +42,7 @@ def signup():
             password_hash=password_hash,
             salt=salt,
             is_active=True,
-            is_verified=False,  # You can implement email verification later
+            is_verified=False,  # Might implement email verification later
         )
 
         try:

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Account - Personal Finance Analytics{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow-sm mt-5">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Delete Account
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone!
+                    </div>
+                    
+                    <h5>What happens when you delete your account:</h5>
+                    <ul class="text-muted">
+                        <li>Your profile will be permanently deleted</li>
+                        <li>All your expense records will be removed</li>
+                        <li>Your financial analytics data will be lost</li>
+                        <li>You will be logged out immediately</li>
+                        <li>You won't be able to reactivate this account</li>
+                    </ul>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Alternative:</strong> Consider exporting your data first from the Settings page.
+                    </div>
+                    
+                    <hr>
+                    
+                    <p class="text-center text-muted mb-4">
+                        Are you absolutely sure you want to delete your account?
+                    </p>
+                    
+                    <form method="POST" action="{{ url_for('user.delete_account') }}" onsubmit="return confirm('Are you absolutely sure? This action cannot be undone!');">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('user.settings') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-2"></i>Delete My Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

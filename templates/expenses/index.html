@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}My Expenses - Personal Finance Analytics{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>My Expenses</h2>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('expenses.add') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Add Expense
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="card-title mb-0">Total Expenses</h5>
+                            <h2 class="mb-0">${{ "%.2f"|format(total) }}</h2>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <p class="mb-0">{{ expenses|length }} transactions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <form method="GET" action="{{ url_for('expenses.index') }}" class="row g-3">
+                <div class="col-md-3">
+                    <select name="month" class="form-select">
+                        <option value="">All Months</option>
+                        <option value="1" {% if request.args.get('month') == '1' %}selected{% endif %}>January</option>
+                        <option value="2" {% if request.args.get('month') == '2' %}selected{% endif %}>February</option>
+                        <option value="3" {% if request.args.get('month') == '3' %}selected{% endif %}>March</option>
+                        <option value="4" {% if request.args.get('month') == '4' %}selected{% endif %}>April</option>
+                        <option value="5" {% if request.args.get('month') == '5' %}selected{% endif %}>May</option>
+                        <option value="6" {% if request.args.get('month') == '6' %}selected{% endif %}>June</option>
+                        <option value="7" {% if request.args.get('month') == '7' %}selected{% endif %}>July</option>
+                        <option value="8" {% if request.args.get('month') == '8' %}selected{% endif %}>August</option>
+                        <option value="9" {% if request.args.get('month') == '9' %}selected{% endif %}>September</option>
+                        <option value="10" {% if request.args.get('month') == '10' %}selected{% endif %}>October</option>
+                        <option value="11" {% if request.args.get('month') == '11' %}selected{% endif %}>November</option>
+                        <option value="12" {% if request.args.get('month') == '12' %}selected{% endif %}>December</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="year" class="form-select">
+                        <option value="">All Years</option>
+                        {% for year in range(2020, 2030) %}
+                        <option value="{{ year }}" {% if request.args.get('year')|int == year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}" {% if request.args.get('category') == category %}selected{% endif %}>{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        <i class="bi bi-funnel me-2"></i>Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Expense Table -->
+    <div class="row">
+        <div class="col-md-12">
+            {% if expenses %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <strong>{{ expense.name }}</strong>
+                                {% if expense.description %}
+                                <br><small class="text-muted">{{ expense.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ expense.main_category }}</span>
+                                <br><small>{{ expense.subcategory }}</small>
+                            </td>
+                            <td class="text-nowrap">${{ "%.2f"|format(expense.amount) }}</td>
+                            <td>{{ expense.payment_method or '-' }}</td>
+                            <td class="text-nowrap">
+                                <a href="{{ url_for('expenses.edit', expense_id=expense.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil">Edit</i>
+                                </a>
+                                <form method="POST" action="{{ url_for('expenses.delete', expense_id=expense.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this expense?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash">Delete</i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-receipt display-1 text-muted"></i>
+                <h4 class="mt-3">No expenses found</h4>
+                <p class="text-muted">Start tracking your expenses by adding your first one.</p>
+                <a href="{{ url_for('expenses.add') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Add Your First Expense
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
