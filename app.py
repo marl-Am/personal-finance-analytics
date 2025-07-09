@@ -3,15 +3,13 @@ from flask import Flask, render_template, redirect, url_for
 from flask_moment import Moment
 from flask_login import LoginManager, login_required, current_user
 from extensions import db
-from models import Expense, User
+from models import User
 import sys
 
 app = Flask(__name__)
 
 # Configuration
-app.config["SECRET_KEY"] = (
-    "your-secret-key"
-)
+app.config["SECRET_KEY"] = "your-secret-key"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)  # Remember for 30 days
@@ -49,16 +47,16 @@ def load_user(user_id):
 from auth.views import auth_bp
 from user.views import user_bp
 from expenses.views import expenses_bp
+from analytics.views import analytics_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(expenses_bp)
+app.register_blueprint(analytics_bp)
 
 # Create database tables
 with app.app_context():
-    # db.drop_all()  # This will delete ALL data
     db.create_all()
-    # print(Expense.__table__.columns.keys())
 
 
 @app.route("/cause500")

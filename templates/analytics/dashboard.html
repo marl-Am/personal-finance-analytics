@@ -1,0 +1,683 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Personal Finance Analytics{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .chart-container {
+        position: relative;
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .chart-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+    }
+    
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .insight-card {
+        background: #f8f9fa;
+        border-left: 4px solid #36A2EB;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .chart-export {
+        background: none;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .chart-export:hover {
+        background: #f8f9fa;
+        border-color: #36A2EB;
+        color: #36A2EB;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-graph-up text-primary me-3"></i>Analytics Dashboard
+            </h1>
+            <p class="text-muted">Gain insights into your spending patterns and financial habits</p>
+        </div>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <div class="row align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Month</label>
+                <select id="monthFilter" class="form-select">
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Year</label>
+                <select id="yearFilter" class="form-select">
+                    {% for year in range(2020, 2030) %}
+                    <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="updateCharts()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Update Charts
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-secondary w-100" onclick="exportData()">
+                    <i class="bi bi-download me-2"></i>Export Report
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Stats -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <p class="stat-label">Total Spent This Month</p>
+                <h2 class="stat-value" id="totalSpent">$0</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <p class="stat-label">Average Daily Spending</p>
+                <h2 class="stat-value" id="avgDaily">$0</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <p class="stat-label">Most Expensive Category</p>
+                <h2 class="stat-value" id="topCategory">-</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <p class="stat-label">Transactions This Month</p>
+                <h2 class="stat-value" id="transactionCount">0</h2>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row 1 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 class="chart-title">
+                    Expense Breakdown by Category
+                    <button class="chart-export" onclick="exportChart('categoryPieChart')">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </h3>
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <canvas id="categoryPieChart" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 class="chart-title">
+                    12-Month Spending Trend
+                    <button class="chart-export" onclick="exportChart('trendLineChart')">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </h3>
+                <canvas id="trendLineChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row 2 -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="chart-container">
+                <h3 class="chart-title">
+                    Daily Spending Pattern
+                    <button class="chart-export" onclick="exportChart('dailyBarChart')">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </h3>
+                <canvas id="dailyBarChart" height="200"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h3 class="chart-title">Top 5 Categories (Year)</h3>
+                <canvas id="topCategoriesChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row 3 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="chart-container">
+                <h3 class="chart-title">Category & Subcategory Breakdown (Interactive)</h3>
+                <div id="sunburstChart" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Methods and Insights -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h3 class="chart-title">Payment Methods</h3>
+                <canvas id="paymentMethodChart" height="250"></canvas>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="chart-container">
+                <h3 class="chart-title">
+                    <i class="bi bi-lightbulb text-warning me-2"></i>Insights & Recommendations
+                </h3>
+                <div id="insights">
+                    <div class="insight-card">
+                        <h6><i class="bi bi-info-circle me-2"></i>Loading insights...</h6>
+                        <p class="mb-0 text-muted">Analyzing your spending patterns...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// Chart instances
+let categoryPieChart, trendLineChart, dailyBarChart, topCategoriesChart, paymentMethodChart;
+
+// Initialize filters with current month/year
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    document.getElementById('monthFilter').value = now.getMonth() + 1;
+    document.getElementById('yearFilter').value = now.getFullYear();
+    
+    // Load all charts
+    updateCharts();
+});
+
+function updateCharts() {
+    const month = document.getElementById('monthFilter').value;
+    const year = document.getElementById('yearFilter').value;
+    
+    // Show loading spinners
+    document.querySelectorAll('.loading-spinner').forEach(el => el.style.display = 'block');
+    
+    // Update all charts
+    updateCategoryPieChart(month, year);
+    updateTrendLineChart();
+    updateDailyBarChart(month, year);
+    updateTopCategories(year);
+    updatePaymentMethods(month, year);
+    updateSunburstChart(month, year);
+    updateStats(month, year);
+}
+
+function updateCategoryPieChart(month, year) {
+    fetch(`/analytics/api/expense-by-category?month=${month}&year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+            if (categoryPieChart) categoryPieChart.destroy();
+            
+            const ctx = document.getElementById('categoryPieChart').getContext('2d');
+            categoryPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: $${context.parsed.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function updateTrendLineChart() {
+    fetch('/analytics/api/monthly-trend')
+        .then(response => response.json())
+        .then(data => {
+            if (trendLineChart) trendLineChart.destroy();
+            
+            const ctx = document.getElementById('trendLineChart').getContext('2d');
+            trendLineChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function updateDailyBarChart(month, year) {
+    fetch(`/analytics/api/daily-spending?month=${month}&year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+            if (dailyBarChart) dailyBarChart.destroy();
+            
+            const ctx = document.getElementById('dailyBarChart').getContext('2d');
+            dailyBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function updateTopCategories(year) {
+    fetch(`/analytics/api/top-categories?year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+            if (topCategoriesChart) topCategoriesChart.destroy();
+            
+            const ctx = document.getElementById('topCategoriesChart').getContext('2d');
+            topCategoriesChart = new Chart(ctx, {
+                type: 'horizontalBar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function updatePaymentMethods(month, year) {
+    fetch(`/analytics/api/payment-methods?month=${month}&year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+            if (paymentMethodChart) paymentMethodChart.destroy();
+            
+            const ctx = document.getElementById('paymentMethodChart').getContext('2d');
+            paymentMethodChart = new Chart(ctx, {
+                type: 'polarArea',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function updateSunburstChart(month, year) {
+    fetch(`/analytics/api/category-breakdown?month=${month}&year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+            // Clear previous chart
+            d3.select("#sunburstChart").selectAll("*").remove();
+            
+            // Create hierarchical data
+            const hierarchyData = {
+                name: "Total",
+                children: data
+            };
+            
+            // Set dimensions
+            const width = document.getElementById('sunburstChart').offsetWidth;
+            const height = 500;
+            const radius = Math.min(width, height) / 2;
+            
+            // Create SVG
+            const svg = d3.select("#sunburstChart")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width/2},${height/2})`);
+            
+            // Create partition layout
+            const partition = d3.partition()
+                .size([2 * Math.PI, radius]);
+            
+            // Create arc generator
+            const arc = d3.arc()
+                .startAngle(d => d.x0)
+                .endAngle(d => d.x1)
+                .innerRadius(d => d.y0)
+                .outerRadius(d => d.y1);
+            
+            // Create hierarchy
+            const root = d3.hierarchy(hierarchyData)
+                .sum(d => d.value)
+                .sort((a, b) => b.value - a.value);
+            
+            // Calculate layout
+            partition(root);
+            
+            // Color scale
+            const color = d3.scaleOrdinal(d3.schemeSet3);
+            
+            // Create arcs
+            svg.selectAll("path")
+                .data(root.descendants())
+                .enter().append("path")
+                .attr("d", arc)
+                .style("fill", d => color(d.data.name))
+                .style("stroke", "#fff")
+                .style("stroke-width", 2)
+                .style("cursor", "pointer")
+                .on("mouseover", function(event, d) {
+                    d3.select(this).style("opacity", 0.8);
+                    
+                    // Show tooltip
+                    const tooltip = d3.select("body").append("div")
+                        .attr("class", "chart-tooltip")
+                        .style("position", "absolute")
+                        .style("padding", "10px")
+                        .style("background", "rgba(0,0,0,0.8)")
+                        .style("color", "white")
+                        .style("border-radius", "5px")
+                        .style("pointer-events", "none")
+                        .style("opacity", 0);
+                    
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.html(`${d.data.name}<br/>$${d.value.toFixed(2)}`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function(d) {
+                    d3.select(this).style("opacity", 1);
+                    d3.selectAll(".chart-tooltip").remove();
+                });
+            
+            // Add labels
+            svg.selectAll("text")
+                .data(root.descendants())
+                .enter().append("text")
+                .attr("transform", d => {
+                    const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
+                    const y = (d.y0 + d.y1) / 2;
+                    return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+                })
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "middle")
+                .style("font-size", "11px")
+                .style("fill", "white")
+                .text(d => d.depth && d.data.name.length < 10 ? d.data.name : "");
+        });
+}
+
+function updateStats(month, year) {
+    // This would typically fetch from an API endpoint
+    // For now, calculating from the category data
+    fetch(`/analytics/api/expense-by-category?month=${month}&year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.labels.length > 0) {
+                const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                document.getElementById('totalSpent').textContent = `$${total.toFixed(2)}`;
+                
+                // Calculate average daily (assuming 30 days)
+                const avgDaily = total / 30;
+                document.getElementById('avgDaily').textContent = `$${avgDaily.toFixed(2)}`;
+                
+                // Find top category
+                const maxIndex = data.datasets[0].data.indexOf(Math.max(...data.datasets[0].data));
+                document.getElementById('topCategory').textContent = data.labels[maxIndex];
+                
+                // Update transaction count (would need separate API)
+                document.getElementById('transactionCount').textContent = data.labels.length;
+            }
+            
+            // Generate insights
+            generateInsights(data);
+        });
+}
+
+function generateInsights(data) {
+    const insightsDiv = document.getElementById('insights');
+    insightsDiv.innerHTML = '';
+    
+    if (data.labels.length > 0) {
+        const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const maxIndex = data.datasets[0].data.indexOf(Math.max(...data.datasets[0].data));
+        const topCategory = data.labels[maxIndex];
+        const topAmount = data.datasets[0].data[maxIndex];
+        const topPercentage = ((topAmount / total) * 100).toFixed(1);
+        
+        // Insight 1: Top spending category
+        const insight1 = document.createElement('div');
+        insight1.className = 'insight-card';
+        insight1.innerHTML = `
+            <h6><i class="bi bi-exclamation-circle text-warning me-2"></i>Highest Spending Category</h6>
+            <p class="mb-0">You spent <strong>${topAmount.toFixed(2)}</strong> on <strong>${topCategory}</strong>, 
+            which is <strong>${topPercentage}%</strong> of your total expenses this month.</p>
+        `;
+        insightsDiv.appendChild(insight1);
+        
+        // Insight 2: Spending distribution
+        const categoriesOver20Percent = data.labels.filter((label, index) => 
+            (data.datasets[0].data[index] / total * 100) > 20
+        ).length;
+        
+        if (categoriesOver20Percent > 1) {
+            const insight2 = document.createElement('div');
+            insight2.className = 'insight-card';
+            insight2.style.borderLeftColor = '#e74c3c';
+            insight2.innerHTML = `
+                <h6><i class="bi bi-graph-down text-danger me-2"></i>Spending Concentration</h6>
+                <p class="mb-0">You have <strong>${categoriesOver20Percent} categories</strong> that each represent 
+                more than 20% of your spending. Consider diversifying your budget.</p>
+            `;
+            insightsDiv.appendChild(insight2);
+        }
+        
+        // Insight 3: Savings opportunity
+        if (total > 1000) {
+            const savingsTarget = total * 0.1; // 10% savings recommendation
+            const insight3 = document.createElement('div');
+            insight3.className = 'insight-card';
+            insight3.style.borderLeftColor = '#27ae60';
+            insight3.innerHTML = `
+                <h6><i class="bi bi-piggy-bank text-success me-2"></i>Savings Opportunity</h6>
+                <p class="mb-0">By reducing spending by just 10%, you could save <strong>${savingsTarget.toFixed(2)}</strong> 
+                this month. Consider reviewing your ${topCategory} expenses first.</p>
+            `;
+            insightsDiv.appendChild(insight3);
+        }
+        
+        // Insight 4: Budget recommendation
+        const avgPerCategory = total / data.labels.length;
+        const categoriesAboveAvg = data.labels.filter((label, index) => 
+            data.datasets[0].data[index] > avgPerCategory * 1.5
+        );
+        
+        if (categoriesAboveAvg.length > 0) {
+            const insight4 = document.createElement('div');
+            insight4.className = 'insight-card';
+            insight4.style.borderLeftColor = '#9966FF';
+            insight4.innerHTML = `
+                <h6><i class="bi bi-calculator text-primary me-2"></i>Budget Alert</h6>
+                <p class="mb-0">Categories significantly above average: <strong>${categoriesAboveAvg.join(', ')}</strong>. 
+                Consider setting specific budgets for these categories.</p>
+            `;
+            insightsDiv.appendChild(insight4);
+        }
+    } else {
+        insightsDiv.innerHTML = `
+            <div class="insight-card">
+                <h6><i class="bi bi-info-circle me-2"></i>No Data Available</h6>
+                <p class="mb-0 text-muted">Start adding expenses to see insights and recommendations.</p>
+            </div>
+        `;
+    }
+}
+
+// Export functions
+function exportChart(chartId) {
+    const canvas = document.getElementById(chartId);
+    const url = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `${chartId}_${new Date().toISOString().split('T')[0]}.png`;
+    link.href = url;
+    link.click();
+}
+
+function exportData() {
+    // This would typically generate a CSV or PDF report
+    alert('Export functionality coming soon! This will generate a comprehensive PDF report of your analytics.');
+}
+
+// Hide loading spinners after charts load
+setTimeout(() => {
+    document.querySelectorAll('.loading-spinner').forEach(el => el.style.display = 'none');
+}, 1000);
+</script>
+{% endblock %}
