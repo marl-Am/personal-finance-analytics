@@ -9,7 +9,9 @@ import sys
 app = Flask(__name__)
 
 # Configuration
-app.config["SECRET_KEY"] = "your-secret-key"
+app.config["SECRET_KEY"] = (
+    "your-secret-key"
+)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)  # Remember for 30 days
