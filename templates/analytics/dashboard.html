@@ -185,7 +185,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label">Year</label>
-                <select id="yearFilter" class="form-select">
+                <select title="select-year" id="yearFilter" class="form-select">
                     {% for year in range(2020, 2030) %}
                     <option value="{{ year }}">{{ year }}</option>
                     {% endfor %}
@@ -238,7 +238,7 @@
             <div class="chart-container">
                 <h3 class="chart-title">
                     Expense Breakdown by Category
-                    <button class="chart-export" onclick="exportChart('categoryPieChart')">
+                    <button title="download-expense-breakdown-by-category-chart" class="chart-export" onclick="exportChart('categoryPieChart')">
                         <i class="bi bi-download"></i>
                     </button>
                 </h3>
@@ -254,7 +254,7 @@
             <div class="chart-container">
                 <h3 class="chart-title">
                     12-Month Spending Trend
-                    <button class="chart-export" onclick="exportChart('trendLineChart')">
+                    <button title="download-12month-spending-trend-chart" class="chart-export" onclick="exportChart('trendLineChart')">
                         <i class="bi bi-download"></i>
                     </button>
                 </h3>
@@ -269,7 +269,7 @@
             <div class="chart-container">
                 <h3 class="chart-title">
                     Daily Spending Pattern
-                    <button class="chart-export" onclick="exportChart('dailyBarChart')">
+                    <button title="download-daily-spending-pattern-chart" class="chart-export" onclick="exportChart('dailyBarChart')">
                         <i class="bi bi-download"></i>
                     </button>
                 </h3>
