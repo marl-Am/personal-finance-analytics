@@ -167,8 +167,9 @@
     <div class="filter-section">
         <div class="row align-items-end">
             <div class="col-md-3">
-                <label for="monthFilter" class="form-label">Month</label>
+                <label class="form-label">Month</label>
                 <select id="monthFilter" class="form-select">
+                    <option value="0">All Year</option>
                     <option value="1">January</option>
                     <option value="2">February</option>
                     <option value="3">March</option>
@@ -185,7 +186,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label">Year</label>
-                <select title="select-year" id="yearFilter" class="form-select">
+                <select id="yearFilter" class="form-select">
                     {% for year in range(2020, 2030) %}
                     <option value="{{ year }}">{{ year }}</option>
                     {% endfor %}
@@ -238,7 +239,7 @@
             <div class="chart-container">
                 <h3 class="chart-title">
                     Expense Breakdown by Category
-                    <button title="download-expense-breakdown-by-category-chart" class="chart-export" onclick="exportChart('categoryPieChart')">
+                    <button class="chart-export" onclick="exportChart('categoryPieChart')">
                         <i class="bi bi-download"></i>
                     </button>
                 </h3>
@@ -254,7 +255,7 @@
             <div class="chart-container">
                 <h3 class="chart-title">
                     12-Month Spending Trend
-                    <button title="download-12month-spending-trend-chart" class="chart-export" onclick="exportChart('trendLineChart')">
+                    <button class="chart-export" onclick="exportChart('trendLineChart')">
                         <i class="bi bi-download"></i>
                     </button>
                 </h3>
@@ -269,7 +270,7 @@
             <div class="chart-container">
                 <h3 class="chart-title">
                     Daily Spending Pattern
-                    <button title="download-daily-spending-pattern-chart" class="chart-export" onclick="exportChart('dailyBarChart')">
+                    <button class="chart-export" onclick="exportChart('dailyBarChart')">
                         <i class="bi bi-download"></i>
                     </button>
                 </h3>
@@ -313,6 +314,50 @@
                         <p class="mb-0 text-muted">Analyzing your spending patterns...</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">
+                    <i class="bi bi-download text-primary me-2"></i>Export Analytics Report
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-4">Choose your preferred format for the analytics report:</p>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-primary" style="cursor: pointer;" onclick="exportPDF()">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-pdf-fill text-danger" style="font-size: 3rem;"></i>
+                                <h6 class="mt-3 mb-2">PDF Report</h6>
+                                <p class="text-muted small mb-0">Professional report with charts and insights</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-secondary" style="cursor: pointer; opacity: 0.6;" onclick="exportXLSX()">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-spreadsheet-fill text-success" style="font-size: 3rem;"></i>
+                                <h6 class="mt-3 mb-2">Excel Report</h6>
+                                <p class="text-muted small mb-0">Coming soon!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="exportPDFBtn" onclick="exportPDF()">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>Generate PDF
+                </button>
             </div>
         </div>
     </div>
@@ -795,8 +840,40 @@ function exportChart(chartId) {
 }
 
 function exportData() {
-    // This would generate a CSV or PDF report
-    alert('Export functionality coming soon! This will generate a comprehensive PDF report of your analytics.');
+    // Show export options modal
+    const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+    exportModal.show();
+}
+
+// function exportData() {
+//     // This would generate a CSV or PDF report
+//     alert('Export functionality coming soon! This will generate a comprehensive PDF report of your analytics.');
+// }
+
+function exportPDF() {
+    const month = document.getElementById('monthFilter').value;
+    const year = document.getElementById('yearFilter').value;
+    
+    // Show loading state
+    const btn = document.getElementById('exportPDFBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Generating...';
+    btn.disabled = true;
+    
+    // Redirect to PDF export endpoint
+    window.location.href = `/analytics/export/pdf?month=${month}&year=${year}`;
+    
+    // Reset button after delay
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+    }, 2000);
+}
+
+function exportXLSX() {
+    // Placeholder for XLSX export
+    alert('XLSX export coming soon!');
 }
 
 // Hide loading spinners after charts load
