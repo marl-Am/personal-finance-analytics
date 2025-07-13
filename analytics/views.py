@@ -40,6 +40,48 @@ def expense_by_category():
     month = request.args.get("month", datetime.now().month, type=int)
     year = request.args.get("year", datetime.now().year, type=int)
 
+    # Build query
+    query = db.session.query(
+        Expense.main_category, func.sum(Expense.amount).label("total")
+    ).filter(Expense.user_id == current_user.id, extract("year", Expense.date) == year)
+
+    # Add month filter only if not "All Year" (month != 0)
+    if month != 0:
+        query = query.filter(extract("month", Expense.date) == month)
+
+    expenses = query.group_by(Expense.main_category).all()
+
+    data = {
+        "labels": [e.main_category for e in expenses],
+        "datasets": [
+            {
+                "data": [float(e.total) for e in expenses],
+                "backgroundColor": [
+                    "#FF6384",
+                    "#36A2EB",
+                    "#FFCE56",
+                    "#4BC0C0",
+                    "#9966FF",
+                    "#FF9F40",
+                    "#FF6384",
+                    "#C9CBCF",
+                    "#4BC0C0",
+                    "#FF6384",
+                    "#36A2EB",
+                    "#FFCE56",
+                    "#FF9F40",
+                    "#9966FF",
+                    "#C9CBCF",
+                ],
+            }
+        ],
+    }
+
+    return jsonify(data)
+    """Get expense data grouped by main category for current month."""
+    month = request.args.get("month", datetime.now().month, type=int)
+    year = request.args.get("year", datetime.now().year, type=int)
+
     expenses = (
         db.session.query(Expense.main_category, func.sum(Expense.amount).label("total"))
         .filter(
@@ -141,6 +183,35 @@ def category_breakdown():
     month = request.args.get("month", datetime.now().month, type=int)
     year = request.args.get("year", datetime.now().year, type=int)
 
+    # Build query
+    query = Expense.query.filter(
+        Expense.user_id == current_user.id, extract("year", Expense.date) == year
+    )
+
+    # Add month filter only if not "All Year"
+    if month != 0:
+        query = query.filter(extract("month", Expense.date) == month)
+
+    expenses = query.all()
+
+    # Group by category and subcategory
+    breakdown = defaultdict(lambda: defaultdict(float))
+    for expense in expenses:
+        breakdown[expense.main_category][expense.subcategory] += float(expense.amount)
+
+    # Format for treemap/sunburst
+    data = []
+    for main_cat, subcats in breakdown.items():
+        children = [{"name": sub, "value": amt} for sub, amt in subcats.items()]
+        data.append(
+            {"name": main_cat, "children": children, "value": sum(subcats.values())}
+        )
+
+    return jsonify(data)
+    """Get detailed breakdown by category and subcategory."""
+    month = request.args.get("month", datetime.now().month, type=int)
+    year = request.args.get("year", datetime.now().year, type=int)
+
     expenses = Expense.query.filter(
         Expense.user_id == current_user.id,
         extract("month", Expense.date) == month,
@@ -166,6 +237,98 @@ def category_breakdown():
 @analytics_bp.route("/api/daily-spending")
 @login_required
 def daily_spending():
+    """Get daily spending for current month or monthly spending for full year."""
+    month = request.args.get("month", datetime.now().month, type=int)
+    year = request.args.get("year", datetime.now().year, type=int)
+
+    # For "All Year", show monthly totals instead of daily
+    if month == 0:
+        expenses = (
+            db.session.query(
+                extract("month", Expense.date).label("month"),
+                func.sum(Expense.amount).label("total"),
+            )
+            .filter(
+                Expense.user_id == current_user.id,
+                extract("year", Expense.date) == year,
+            )
+            .group_by("month")
+            .order_by("month")
+            .all()
+        )
+
+        # Create data for all 12 months
+        monthly_data = [0] * 12
+        month_names = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
+
+        for expense in expenses:
+            monthly_data[expense.month - 1] = float(expense.total)
+
+        return jsonify(
+            {
+                "labels": month_names,
+                "datasets": [
+                    {
+                        "label": "Monthly Spending",
+                        "data": monthly_data,
+                        "backgroundColor": "#4BC0C0",
+                        "borderColor": "#4BC0C0",
+                        "borderWidth": 1,
+                    }
+                ],
+            }
+        )
+    else:
+        # Original daily view for specific month
+        expenses = (
+            db.session.query(
+                extract("day", Expense.date).label("day"),
+                func.sum(Expense.amount).label("total"),
+            )
+            .filter(
+                Expense.user_id == current_user.id,
+                extract("month", Expense.date) == month,
+                extract("year", Expense.date) == year,
+            )
+            .group_by("day")
+            .order_by("day")
+            .all()
+        )
+
+        # Create data for all days in month
+        days_in_month = calendar.monthrange(year, month)[1]
+        daily_data = [0] * days_in_month
+
+        for expense in expenses:
+            daily_data[expense.day - 1] = float(expense.total)
+
+        return jsonify(
+            {
+                "labels": list(range(1, days_in_month + 1)),
+                "datasets": [
+                    {
+                        "label": "Daily Spending",
+                        "data": daily_data,
+                        "backgroundColor": "#4BC0C0",
+                        "borderColor": "#4BC0C0",
+                        "borderWidth": 1,
+                    }
+                ],
+            }
+        )
     """Get daily spending for current month."""
     month = request.args.get("month", datetime.now().month, type=int)
     year = request.args.get("year", datetime.now().year, type=int)
@@ -248,6 +411,46 @@ def top_categories():
 @analytics_bp.route("/api/payment-methods")
 @login_required
 def payment_methods():
+    """Get expense breakdown by payment method."""
+    month = request.args.get("month", datetime.now().month, type=int)
+    year = request.args.get("year", datetime.now().year, type=int)
+
+    # Build query
+    query = db.session.query(
+        Expense.payment_method,
+        func.sum(Expense.amount).label("total"),
+        func.count(Expense.id).label("count"),
+    ).filter(
+        Expense.user_id == current_user.id,
+        extract("year", Expense.date) == year,
+        Expense.payment_method.isnot(None),
+    )
+
+    # Add month filter only if not "All Year"
+    if month != 0:
+        query = query.filter(extract("month", Expense.date) == month)
+
+    expenses = query.group_by(Expense.payment_method).all()
+
+    return jsonify(
+        {
+            "labels": [e.payment_method for e in expenses],
+            "datasets": [
+                {
+                    "label": "Amount by Payment Method",
+                    "data": [float(e.total) for e in expenses],
+                    "backgroundColor": [
+                        "#FF9F40",
+                        "#FF6384",
+                        "#C9CBCF",
+                        "#4BC0C0",
+                        "#36A2EB",
+                    ],
+                }
+            ],
+            "counts": [e.count for e in expenses],
+        }
+    )
     """Get expense breakdown by payment method."""
     month = request.args.get("month", datetime.now().month, type=int)
     year = request.args.get("year", datetime.now().year, type=int)
