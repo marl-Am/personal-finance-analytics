@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="bg-white p-5 rounded shadow-sm">
+
+    <h1 class="mb-4">Terms of Service</h1>
+    <p class="text-muted">Effective Date: July 13, 2025</p>
+
+    <section class="mb-4">
+      <h2 class="h5">1. Overview</h2>
+      <p>Welcome to <strong>Personal Finance Analytics</strong> (“the Service”), a comprehensive web application for tracking personal expenses and generating advanced analytics visualizations. By accessing or using this application, you agree to be bound by the terms and conditions outlined below.</p>
+    </section>
+
+    <section class="mb-4">
+      <h2 class="h5">2. Use of the Service</h2>
+      <ul>
+        <li>You must be at least 18 years old to use this service.</li>
+        <li>The Service is provided for personal, non-commercial use only.</li>
+        <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+      </ul>
+    </section>
+
+    <section class="mb-4">
+      <h2 class="h5">3. Data and Privacy</h2>
+      <p>We respect your privacy. All financial data entered into the application remains private to your account unless explicitly shared. For more details, please review our <a href="{{ url_for('privacy') }}">Privacy Policy</a>.</p>
+    </section>
+
+    <section class="mb-4">
+      <h2 class="h5">4. Limitation of Liability</h2>
+      <p><strong>Personal Finance Analytics</strong> is provided “as is” without warranties of any kind. We are not responsible for any financial decisions made based on the analytics provided by the Service.</p>
+    </section>
+
+    <section class="mb-4">
+      <h2 class="h5">5. Modifications</h2>
+      <p>We reserve the right to update these Terms at any time. Continued use of the Service after changes means you accept the updated Terms.</p>
+    </section>
+
+    <section class="mb-4">
+      <h2 class="h5">6. Contact</h2>
+      <p>If you have any questions about these Terms, please contact us at <a href="mailto:support@personalfinanceanalytics.com">support@personalfinanceanalytics.com</a>.</p>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

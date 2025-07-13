@@ -21,14 +21,15 @@
                         <div class="mb-4">
                             <h5 class="text-muted mb-3">
                                 <i class="bi bi-envelope me-2"></i>Email Preferences
+                                <span class="badge bg-secondary">Coming Soon</span>
                             </h5>
                             <div class="form-check mb-3">
-                                {{ form.email_notifications(class="form-check-input") }}
+                                {{ form.email_notifications(class="form-check-input", disabled=True) }}
                                 {{ form.email_notifications.label(class="form-check-label") }}
                                 <small class="d-block text-muted">Receive emails about security alerts and important account updates</small>
                             </div>
                             <div class="form-check mb-3">
-                                {{ form.marketing_emails(class="form-check-input") }}
+                                {{ form.marketing_emails(class="form-check-input", disabled=True) }}
                                 {{ form.marketing_emails.label(class="form-check-label") }}
                                 <small class="d-block text-muted">Get tips on managing finances and new feature announcements</small>
                             </div>
@@ -40,9 +41,10 @@
                         <div class="mb-4">
                             <h5 class="text-muted mb-3">
                                 <i class="bi bi-shield-lock me-2"></i>Privacy Settings
+                                <span class="badge bg-secondary">Coming Soon</span>
                             </h5>
                             <div class="form-check mb-3">
-                                {{ form.profile_visibility(class="form-check-input") }}
+                                {{ form.profile_visibility(class="form-check-input", disabled=True) }}
                                 {{ form.profile_visibility.label(class="form-check-label") }}
                                 <small class="d-block text-muted">Allow other users to view your profile (coming soon)</small>
                             </div>
@@ -54,9 +56,10 @@
                         <div class="mb-4">
                             <h5 class="text-muted mb-3">
                                 <i class="bi bi-bar-chart me-2"></i>Data Usage
+                                <span class="badge bg-secondary">Coming Soon</span>
                             </h5>
                             <div class="form-check mb-3">
-                                {{ form.export_data(class="form-check-input") }}
+                                {{ form.export_data(class="form-check-input", disabled=True) }}
                                 {{ form.export_data.label(class="form-check-label") }}
                                 <small class="d-block text-muted">Help us improve by including your anonymized data in analytics</small>
                             </div>
