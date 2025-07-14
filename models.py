@@ -59,9 +59,6 @@ class User(UserMixin, db.Model):
         comment="Version number for optimistic locking, prevents race conditions",
     )
 
-    # For debugging, in python file do:
-    # user = User.query.first()
-    # print(user)  # Shows: <User john_doe (john@email.com)>
     def __repr__(self) -> str:
         """String representation of user."""
         return f"<User {self.username}>"

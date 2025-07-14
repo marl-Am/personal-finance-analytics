@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta, timezone
-from flask import Flask, render_template, redirect, url_for
+from datetime import datetime, timedelta
+from flask import Flask, render_template
 from flask_moment import Moment
 from flask_login import LoginManager, login_required, current_user
 from extensions import db
@@ -78,7 +78,7 @@ def internal_server_error(e):
 
 @app.route("/")
 def index():
-    return render_template("index.html", current_time=datetime.now(timezone.utc))
+    return render_template("index.html")
 
 
 @app.route("/dashboard")

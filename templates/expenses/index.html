@@ -114,11 +114,13 @@
                             <td>{{ expense.payment_method or '-' }}</td>
                             <td class="text-nowrap">
                                 <a href="{{ url_for('expenses.edit', expense_id=expense.id) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil">Edit</i>
+                                    <!-- <i class="bi bi-pencil">Edit</i> -->
+                                     Edit
                                 </a>
                                 <form method="POST" action="{{ url_for('expenses.delete', expense_id=expense.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this expense?');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash">Delete</i>
+                                        <!-- <i class="bi bi-trash">Delete</i> -->
+                                         Delete
                                     </button>
                                 </form>
                             </td>
