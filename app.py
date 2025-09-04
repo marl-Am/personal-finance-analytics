@@ -5,11 +5,12 @@ from flask_login import LoginManager, login_required, current_user
 from extensions import db
 from models import User
 import sys
+import os
 
 app = Flask(__name__)
 
 # Configuration
-app.config["SECRET_KEY"] = "your-secret-key"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or "dev-fallback-key"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)  # Remember for 30 days
