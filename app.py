@@ -7,6 +7,7 @@ from models import User
 import sys
 import os
 import logging
+from sqlalchemy import text
 
 app = Flask(__name__)
 
@@ -82,8 +83,10 @@ app.register_blueprint(analytics_bp)
 def test_db_connection():
     try:
         with app.app_context():
-            # Test connection
-            result = db.engine.execute("SELECT 1").fetchone()
+            # Test connection using SQLAlchemy 2.0 syntax
+            with db.engine.connect() as connection:
+                result = connection.execute(text("SELECT 1"))
+                result.fetchone()
             logger.info("✅ Database connection successful!")
 
             # Create tables
