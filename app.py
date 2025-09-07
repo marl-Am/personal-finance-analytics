@@ -6,19 +6,42 @@ from extensions import db
 from models import User
 import sys
 import os
+import logging
 
 app = Flask(__name__)
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Database configuration with free external PostgreSQL
+database_url = os.environ.get("DATABASE_URL")
+if database_url:
+    # Handle different PostgreSQL URL formats
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    logger.info("🐘 Using external PostgreSQL database")
+
+    # Add connection reliability settings
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "connect_args": {"sslmode": "require"},
+    }
+else:
+    # Fallback to SQLite for development
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
+    logger.info("🗃️ Using SQLite database (development)")
+
 # Configuration
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or "dev-fallback-key"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)  # Remember for 30 days
-app.config["REMEMBER_COOKIE_SECURE"] = (
-    False  # Set to False for development, True for production with HTTPS
-)
-app.config["REMEMBER_COOKIE_HTTPONLY"] = True  # JavaScript can't access the cookie
-app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
+app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)
+app.config["REMEMBER_COOKIE_SECURE"] = False
+app.config["REMEMBER_COOKIE_HTTPONLY"] = True
+app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
 
 # Initialize extensions
 moment = Moment(app)
@@ -34,7 +57,6 @@ login_manager.login_message_category = "info"
 
 @login_manager.user_loader
 def load_user(user_id):
-    # Convert string to UUID object
     try:
         import uuid
 
@@ -55,9 +77,32 @@ app.register_blueprint(user_bp)
 app.register_blueprint(expenses_bp)
 app.register_blueprint(analytics_bp)
 
-# Create database tables
+
+# Test database connection and create tables
+def test_db_connection():
+    try:
+        with app.app_context():
+            # Test connection
+            result = db.engine.execute("SELECT 1").fetchone()
+            logger.info("✅ Database connection successful!")
+
+            # Create tables
+            db.create_all()
+            logger.info("✅ Database tables ready")
+
+            # Log user count for verification
+            user_count = User.query.count()
+            logger.info(f"📊 Current users in database: {user_count}")
+
+            return True
+    except Exception as e:
+        logger.error(f"❌ Database connection failed: {str(e)}")
+        return False
+
+
+# Initialize database
 with app.app_context():
-    db.create_all()
+    test_db_connection()
 
 
 @app.route("/cause500")
@@ -88,19 +133,16 @@ def dashboard():
     from sqlalchemy import extract, func
     from models import Expense
 
-    # Get current month and year
     now = datetime.now()
     current_month = now.month
     current_year = now.year
 
-    # Query expenses for current month
     monthly_expenses = Expense.query.filter(
         Expense.user_id == current_user.id,
         extract("month", Expense.date) == current_month,
         extract("year", Expense.date) == current_year,
     ).all()
 
-    # Calculate totals
     total_amount = sum(expense.amount for expense in monthly_expenses)
     transaction_count = len(monthly_expenses)
     average_expense = total_amount / transaction_count if transaction_count > 0 else 0
@@ -124,7 +166,5 @@ def privacy():
 
 
 if __name__ == "__main__":
-    import os
-
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
