@@ -38,7 +38,7 @@
 
 ---
 
-### ✨ Features
+### Features
 
 ### 🔐 **Authentication & Security**
 - Secure user registration with email validation
@@ -77,7 +77,7 @@
 
 ---
 
-### 🛠️ Tech Stack
+### Tech Stack
 
 <table>
 <tr>
