@@ -25,24 +25,20 @@
 ## 📸 Screenshots
 
 <div align="center">
-  
-### Dashboard Overview
-![Dashboard Screenshot](screenshots/dashboard.png)
-*Interactive analytics dashboard with real-time expense visualization*
 
-### Expense Management
-![Expense Management](screenshots/expense-management.png)
-*Intuitive expense tracking with category filtering and quick actions*
+### My Expenses Overview
+![My Expenses Overview](assets/MyExpenses.png)
+*Add/Delete expenses page with category filtering*
 
 ### Analytics & Reports
-![Analytics Reports](screenshots/analytics-reports.png)
+![Analytics Reports](assets/Analytics.png)
 *Comprehensive reports with Chart.js and D3.js visualizations*
 
 </div>
 
 ---
 
-## ✨ Features
+### ✨ Features
 
 ### 🔐 **Authentication & Security**
 - Secure user registration with email validation
@@ -81,7 +77,7 @@
 
 ---
 
-## 🛠️ Tech Stack
+### 🛠️ Tech Stack
 
 <table>
 <tr>
