@@ -30,10 +30,9 @@ if database_url:
         "pool_pre_ping": True,
         "pool_recycle": 300,
         "connect_args": {"sslmode": "require"},
+        "pool_size": 5,  # Handle sleeping database
+        "max_overflow": 10,  # Handle sleeping database
     }
-    # To handle sleeping database
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_size"] = 5
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"]["max_overflow"] = 10
 else:
     # Fallback to SQLite for development
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
