@@ -29,9 +29,14 @@ if database_url:
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
-        "connect_args": {"sslmode": "require"},
+        "connect_args": {
+            "sslmode": "require",
+            "connect_timeout": 10,
+            "options": "-c statement_timeout=30000", # 30 seconds query timeout
+        },
         "pool_size": 5,  # Handle sleeping database
         "max_overflow": 10,  # Handle sleeping database
+        "pool_timeout": 30,  # Max time to wait for a connection
     }
 else:
     # Fallback to SQLite for development
